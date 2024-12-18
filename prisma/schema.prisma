@@ -1,0 +1,94 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Student {
+  id       String @id @default(uuid()) @db.Uuid
+  name     String @db.VarChar(60)
+  email    String @unique @db.VarChar(60)
+  password String @db.VarChar(50)
+  age      Int?
+
+  token String?
+
+  enrollments Enrollment[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  profile     Profile?
+  assessments Assessment[]
+
+  @@map("students")
+}
+
+model Profile {
+  id        String    @id @default(uuid()) @db.Uuid
+  bio       String?   @db.VarChar(150)
+  image     String?   @db.VarChar(255)
+  birthDate DateTime?
+  //nossa FK
+  studentId String    @unique @db.Uuid
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  stundent Student @relation(fields: [studentId], references: [id])
+
+  @@map("profile")
+}
+
+model Assessment {
+  id         String  @id @default(uuid()) @db.Uuid
+  discipline String  @db.VarChar(60)
+  grade      Decimal @db.Decimal(4, 2)
+  //nossa FK
+  studentId  String  @db.Uuid
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  student Student @relation(fields: [studentId], references: [id])
+
+  @@map("assessments")
+}
+
+model Class {
+  id          String @id @default(uuid()) @db.Uuid
+  program     String @db.VarChar(60)
+  edition     String @db.VarChar(60)
+  maxStudents Int?   @map("max_students")
+  minStudents Int?   @map("min_students")
+
+  enrollments Enrollment[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("classes")
+}
+
+model Enrollment {
+  studentId String @default(uuid()) @map("student_id") @db.Uuid
+  classId   String @default(uuid()) @map("class_id") @db.Uuid
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  student Student @relation(fields: [studentId], references: [id])
+  class   Class   @relation(fields: [classId], references: [id])
+
+  @@id([studentId, classId])
+  @@map("enrollments")
+}
